@@ -1,0 +1,44 @@
+version: '3.7'
+
+services:
+### PHP Container #########################################
+  jsonapiphp:
+    container_name: jsonapi_php
+    hostname: jsonapi_php
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html/app
+    volumes:
+      - .:/var/www/html/app
+    depends_on:
+      - jsonapidb
+
+  ### NGINX Container #########################################
+  jsonapinginx:
+    container_name: jsonapi_nginx
+    hostname: jsonapi_nginx
+    image: nginx:1.17
+    restart: unless-stopped
+    depends_on: 
+      - jsonapiphp
+    ports:
+      - 5007:80
+    volumes:
+      - .:/var/www/html/app
+      - ./docker/virtualhost.conf:/etc/nginx/conf.d/default.conf
+
+### POSTGRESS Container #########################################
+  jsonapidb:
+    container_name: jsonapi_db
+    hostname: jsonapi_db
+    image: postgres:11
+    restart: always
+    environment:
+      POSTGRES_DB: jsonapi
+      POSTGRES_USER: jsonapi-user
+      POSTGRES_PASSWORD: secret
+      PGPASSWORD: secret
+    ports:
+      - '54328:5432'
